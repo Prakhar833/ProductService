@@ -1,12 +1,16 @@
 package com.example.product.services;
 
+import com.example.product.dtos.InvalidProductIdException;
 import com.example.product.dtos.ProductRequestDto;
 import com.example.product.dtos.ProductResponseDto;
 import com.example.product.models.Category;
 import com.example.product.models.Product;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpMessageConverterExtractor;
+import org.springframework.web.client.RequestCallback;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.ArrayList;
@@ -19,6 +23,9 @@ public class FakeStoreProductService implements IProductServices{
 
     @Autowired
     RestTemplate restTemplate;
+
+
+
     public Product getProductFromResponseDto(ProductResponseDto responseDto){
         Product product = new Product();
         product.setId(responseDto.getId());
@@ -33,8 +40,16 @@ public class FakeStoreProductService implements IProductServices{
         product.setCategory(category);
         return product;
     }
+
+
+
+
     @Override
-    public Product getSingleProduct(Long id) {
+    public Product getSingleProduct(Long id) throws InvalidProductIdException {
+
+        if(id>20){
+            throw new InvalidProductIdException();
+        }
 
         //pass 'id' to get product from fakeStore
 
@@ -44,6 +59,9 @@ public class FakeStoreProductService implements IProductServices{
         return getProductFromResponseDto(response);
 
     }
+
+
+
 
     @Override
     public List<Product> getAllProducts() {
@@ -59,10 +77,24 @@ public class FakeStoreProductService implements IProductServices{
         return output;
     }
 
+
+
+
     @Override
     public Product updateProduct(Long id, ProductRequestDto productRequestDto) {
-        return null;
+
+
+        RequestCallback requestCallback = restTemplate.httpEntityCallback(productRequestDto, ProductResponseDto.class);
+        HttpMessageConverterExtractor<ProductResponseDto> responseExtractor =
+                new HttpMessageConverterExtractor<>(ProductResponseDto.class,
+                        restTemplate.getMessageConverters());
+        ProductResponseDto responseDto = restTemplate.execute("https://fakestoreapi.com/products/" + id,
+                HttpMethod.PUT, requestCallback, responseExtractor);
+        return getProductFromResponseDto(responseDto);
+
+
     }
 
 
 }
+
