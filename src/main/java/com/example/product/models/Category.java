@@ -1,11 +1,15 @@
 package com.example.product.models;
 
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.io.Serializable;
+
 @Getter
 @Setter
-public class Category {
+@JsonSerialize
+public class Category implements Serializable {
     private Long id;
     private String name;
 }

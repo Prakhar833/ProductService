@@ -7,6 +7,7 @@ import com.example.product.models.Category;
 import com.example.product.models.Product;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpMessageConverterExtractor;
@@ -23,6 +24,10 @@ public class FakeStoreProductService implements IProductServices{
 
     @Autowired
     RestTemplate restTemplate;
+
+
+    @Autowired
+    private RedisTemplate<String,Long> redisTemplate;
 
 
 
@@ -47,6 +52,12 @@ public class FakeStoreProductService implements IProductServices{
     @Override
     public Product getSingleProduct(Long id) throws InvalidProductIdException {
 
+        if(redisTemplate.opsForHash().hasKey("PRODUCTS" , id)){
+            return (Product) redisTemplate.opsForHash().get("PRODUCTS" , id);
+        }
+
+
+
         if(id>20){
             throw new InvalidProductIdException();
         }
@@ -56,7 +67,10 @@ public class FakeStoreProductService implements IProductServices{
         ProductResponseDto response = restTemplate.getForObject("https://fakestoreapi.com/products/" + id,
                 ProductResponseDto.class);
 
-        return getProductFromResponseDto(response);
+        Product product = getProductFromResponseDto(response);
+
+        redisTemplate.opsForHash().put("PRODUCTS" , id , product);
+        return product;
 
     }
 
