@@ -70,6 +70,7 @@ public class FakeStoreProductService implements IProductServices{
         Product product = getProductFromResponseDto(response);
 
         redisTemplate.opsForHash().put("PRODUCTS" , id , product);
+
         return product;
 
     }
